@@ -6,5 +6,11 @@
             "email": "wdridi1@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "": "src/",
+            "Test\\": "tests/"
+        }
+    },
     "require": {}
 }
