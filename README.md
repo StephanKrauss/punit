@@ -1,6 +1,8 @@
 ### Installation
 
-    composer install
+    composer create-project dridi-walid/punit:dev-master
+    or
+    git clone https://github.com/dridi-walid/punit.git && composer install
     
 ### Run tests
 
