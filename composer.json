@@ -1,5 +1,8 @@
 {
     "name": "dridi-walid/punit",
+    "version": "1.0.0",
+    "description": "Another php unit test micro framework",
+    "license": "MIT",
     "authors": [
         {
             "name": "Dridi Walid",
@@ -12,5 +15,10 @@
             "Test\\": "tests/"
         }
     },
-    "require": {}
+    "require": {},    
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
 }

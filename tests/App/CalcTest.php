@@ -2,12 +2,24 @@
 
 namespace Test\App;
 
-use App\Assert;
 use App\Calc;
 
-class CalcTest extends Assert {
-	public function testSum() {
+class CalcTest {
+	public function testSumPass() {
 		$operation = new Calc();
-		$this->assertTrue($operation->sum(1, 1) === 2);
+		$expected = 2;
+		$result = $operation->sum(1, 1);
+		if ($result !== $expected) {
+		    throw new \Exception('Expected: '.$expected.', Result: '.$result);
+		}
+	}
+	
+	public function testSumFail() {
+		$operation = new Calc();
+		$expected = 3;
+		$result = $operation->sum(1, 1);
+		if ($result !== $expected) {
+		    throw new \Exception('Expected: '.$expected.', Result: '.$result);
+		}
 	}
 }

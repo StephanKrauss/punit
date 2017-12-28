@@ -1,0 +1,41 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__.'/../vendor/autoload.php';
+
+$classes = [
+    Test\App\CalcTest::class => [
+        'testSumPass',
+        'testSumFail'
+    ]
+];
+
+$stack = [];
+$i = 1;
+$pass = 0;
+$fail = 0;
+foreach($classes as $class => $methods) {
+    foreach($methods as $method) {
+        try {
+            (new $class())->$method();
+            $stack[$class][$method]['result'] = true;
+            
+            $pass++;
+            
+            echo "$i) $class::$method() --> \033[32m PASS \033[0m" . "\r\n";
+        } catch(\Exception $e) {
+            $stack[$class][$method]['result'] = false;
+            $stack[$class][$method]['stack'] = $e;
+            
+            $fail++;
+            
+            echo "$i) $class::$method() --> \033[31m FAIL, ";
+            echo "Error: ".$e->getMessage()." \033[0m ". "\r\n";
+        } 
+        
+        $i++;         
+    }   
+}
+
+echo "\r\n" . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . "\r\n";
+
