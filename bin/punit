@@ -1,7 +1,12 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__.'/../vendor/autoload.php';
+// Make sure the current working directory is the project root directory
+chdir(dirname(dirname(__FILE__)));
+
+$config = getConfig();
+
+require $config['punit']['bootstrap'];
 
 $classes = [
     Test\App\CalcTest::class => [
@@ -39,3 +44,14 @@ foreach($classes as $class => $methods) {
 
 echo "\r\n" . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . "\r\n";
 
+function getConfig()
+{
+    $config = [];
+
+    foreach (['punit.php.dist', 'punit.php'] as $fileName) {
+        if (file_exists($fileName)) {
+            $config = array_replace_recursive($config, require_once($fileName));
+        }
+    }
+    return $config;
+}
