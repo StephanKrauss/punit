@@ -1,5 +1,7 @@
 ### Installation
 
+[![Join the chat at https://gitter.im/punit-framework/Lobby](https://badges.gitter.im/punit-framework/Lobby.svg)](https://gitter.im/punit-framework/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
     composer create-project dridi-walid/punit:dev-master
     or
     git clone https://github.com/dridi-walid/punit.git && composer install
