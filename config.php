@@ -2,7 +2,7 @@
 
 return [
     "parameters" => [
-        "dns": "sqlite::memory:"
+        "dsn": "sqlite::memory:"
     ],
     "punit" => [
         "bootstrap": "./vendor/autoload.php",
