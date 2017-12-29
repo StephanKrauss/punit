@@ -19,6 +19,9 @@ $stack = [];
 $i = 1;
 $pass = 0;
 $fail = 0;
+
+xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+
 foreach($classes as $class => $methods) {
     foreach($methods as $method) {
         try {
@@ -44,6 +47,15 @@ foreach($classes as $class => $methods) {
 
 echo "\r\n" . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . "\r\n";
 
+//getCodeCoverage($classes, xdebug_get_code_coverage());
+//var_dump(xdebug_get_code_coverage());
+xdebug_stop_code_coverage();
+
+/** 
+ * Load or|and override punit configuration
+ *
+ * @returns Array Punit array configuration
+ */
 function getConfig()
 {
     $config = [];
@@ -55,3 +67,100 @@ function getConfig()
     }
     return $config;
 }
+
+/**
+ * Generates html report 
+ * 
+ * @param Array $codeCoverage Gathered information for code coverage
+ *
+ * @returns boolean
+ */
+function getCodeCoverage($classes, $codeCoverage)
+{
+    // @TODO Filter $codeCoverage array using namespaces keys defined in $classes array
+    // @TODO Create coverage folder 
+    // @TODO Create index.html containing list of class.html path links
+    // @TODO Convert namespace to folder path and create coverage/path/to/class.html
+    // @TODO Generate css class for every line based on flag $codeCoverage element
+    /*
+        li:nth-child(3) {
+            background-color: #F6C6CE;
+        }
+    */
+    
+    //@TODO Generate from filtered $codeCoverage
+    $indexHtml = '
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>    
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <style>
+        body {
+            font-family: "courier new";
+        }
+        
+        li.L0, li.L1, li.L2, li.L3, li.L4
+        li.L5, li.L6, li.L7, li.L8, li.L9 {
+          list-style-type: decimal !important;
+        }
+    </style>
+</head>
+<body>
+    <ul>
+        <!--<li><a href="App/Calc.html">App/Cal.html</a></li>-->
+        '.$tableOfContents.'
+    </ul>
+</body>
+</html>
+    ';
+    
+    //@TODO save to coverage/index.html 
+    
+    //@TODO generate css classes for background for each line    
+    foreach($filteredClasses as $namespace) {
+        $notCoveredCodeCss = 'li:nth-child(3) {
+            background-color: #F6C6CE;
+        }';
+        
+        $coveredCodeCss = 'li:nth-child(7), li:nth-child(8) {
+            background-color: #E6F5D0;
+        }';
+        
+        $phpFile = '
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>    
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <style>
+        body {
+            font-family: "courier new";
+        }
+        
+        li.L0, li.L1, li.L2, li.L3, li.L4
+        li.L5, li.L6, li.L7, li.L8, li.L9 {
+          list-style-type: decimal !important;
+        }
+        
+        '.$coveredCodeCss.'
+        '.$notCoveredCodeCss.'
+    </style>
+</head>
+<body>
+    <a href="../index.html"><-- Retour</a>
+    <pre class="prettyprint lang-php linenums">&lt;?php
+'.$sourceCode.'</pre>
+</body>
+</html>';
+        //@TODO save to coverage/App/Calc.html
+    }
+    
+    echo "\r\n" . "\033[34m Code Coverage completed! \033[0m" . "\r\n";
+}
+
+
+
+
