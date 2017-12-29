@@ -2,18 +2,18 @@
 
 return [
     "parameters" => [
-        "dsn" => "sqlite::memory:"
+        "dsn": "sqlite::memory:"
     ],
     "punit" => [
-        "bootstrap" => "./vendor/autoload.php",
-        "directories" => [
+        "bootstrap": "./vendor/autoload.php",
+        "directories": [
             "./tests"
         ],
-        "class" => [
+        "class": [
             "prefix" => null,
             "suffix" => "Test.php"
         ],
-        "method" => [
+        "method": [
             "prefix" => "test",
             "suffix" => null
         ],
