@@ -50,7 +50,7 @@ function getConfig()
 
     foreach (['punit.php.dist', 'punit.php'] as $fileName) {
         if (file_exists($fileName)) {
-            $config = array_merge_recursive($config, require_once($fileName));
+            $config = array_replace_recursive($config, require_once($fileName));
         }
     }
     return $config;
