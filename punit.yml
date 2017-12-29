@@ -1,2 +1,12 @@
 parameters:
-    directory: tests
+    directory: 
+        path: tests
+        class:
+            prefix: ~
+            suffix: Test.php
+        method:
+            prefix: test
+            suffix: ~           
+    colors: false
+    verbose: false
+    stop_on_failure: false
