@@ -9,11 +9,11 @@ $config = getConfig();
 require $config['punit']['bootstrap'];
 
 $classes = [
-    Test\App\CalcTest::class => [
-        'testSumPass',
-        'testSumFail'
-    ]
+    Test\App\CalcTest::class => [],
+    Test\App\AssertTest::class => [],
 ];
+
+fillClassMethods($config, $classes);
 
 $stack = [];
 $i = 1;
@@ -47,15 +47,14 @@ foreach($classes as $class => $methods) {
 
 echo "\r\n" . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . "\r\n";
 
+
 //getCodeCoverage($classes, xdebug_get_code_coverage());
 //var_dump(xdebug_get_code_coverage());
 xdebug_stop_code_coverage();
 
-/** 
- * Load or|and override punit configuration
- *
- * @returns Array Punit array configuration
- */
+//------------------------------------------
+// Configuration
+//------------------------------------------
 function getConfig()
 {
     $config = [];
@@ -67,6 +66,7 @@ function getConfig()
     }
     return $config;
 }
+
 
 /**
  * Generates html report 
@@ -162,5 +162,210 @@ function getCodeCoverage($classes, $codeCoverage)
 }
 
 
+function fillClassMethods(array $config, array &$classes)
+{
+    foreach ($classes as $className => &$methodNames) {
+        foreach (get_class_methods($className) as $methodName) {
+            if (startsWith($methodName, $config['punit']['method']['prefix'].'') &&
+                endsWith($methodName, $config['punit']['method']['suffix'].'')) {
+                $methodNames[] = $methodName;
+            }
+        }
+    }
+}
+
+//------------------------------------------
+// Assertions
+//------------------------------------------
+
+// Array
+
+function assertArrayHasKey(array &$array, $key)
+{
+    if (!isset($array[$key]) && !array_key_exists($key, $array)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertArrayHasKeys(array &$array, array $keys)
+{
+    foreach ($keys as $key) {
+        assertArrayHasKey($array, $key);
+    }
+}
+
+function assertArrayHasSize(array $array, int $size)
+{
+    if (count($array) !== $size) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+// Directory
+
+function assertDirectoryExists(string $path)
+{
+    if (!is_dir($path)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertDirectoryIsReadable(string $path)
+{
+    if (!is_dir($path) || !is_readable($path)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertDirectoryIsWritable(string $path)
+{
+    if (!is_dir($path) || !is_writable($path)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+// File
+
+function assertFileExists(string $path)
+{
+    if (!is_file($path)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertFileEquals(string $path, string $content)
+{
+    if (!is_file($path) || file_get_contents($path) !== $content) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertFileIsReadable(string $path)
+{
+    if (!is_file($path) || !is_readable($path)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertFileIsWritable(string $path)
+{
+    if (!is_file($path) || !is_writable($path)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+// Comparaison
+
+function assertEmpty($variable)
+{
+    if (!empty($variable)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertEquals($variable, $data)
+{
+    if ($variable !== $data) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertFalse($variable)
+{
+    if (false !== $variable) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertTrue($variable)
+{
+    if (true !== $variable) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertGreaterThan($variable, $data)
+{
+    if ($variable <= $data) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertGreaterThanOrEqual($variable, $data)
+{
+    if ($variable < $data) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+// Object
+
+function assertInstanceOf($variable, $data)
+{
+    if (!($variable instanceof $data)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertNull($variable)
+{
+    if (null !== $variable) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertObjectHasAttribute($object, $attribute)
+{
+    if (!property_exists($object, $attribute)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+// String
+
+function assertRegExp($str, $regex)
+{
+    if (!preg_match($regex, $str)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertStringEndsWith($str, $needle)
+{
+    if (!endsWith($str, $needle)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
+
+function assertStringStartsWith($str, $needle)
+{
+    if (!startsWith($str, $needle)) {
+        throw new \Exception(__FUNCTION__.' failed.');
+    }
+}
 
 
+/**
+ * Checks if a string starts with $needle.
+ *
+ * @param string $str The string to search in.
+ * @param string $needle The searched string.
+ * @return bool true if $str starts with $needle, false otherwise.
+ */
+function startsWith(string $str, string $needle): bool
+{
+    return $needle === substr($str, 0, strlen($needle));
+}
+
+/**
+ * Checks if a string ends with $needle.
+ *
+ * @param string $str The string to search in.
+ * @param string $needle The searched string.
+ * @return bool true if $str ends with $needle, false otherwise.
+ */
+function endsWith(string $str, string $needle): bool
+{
+    $needleLen = strlen($needle);
+    return $needleLen ? $needle === substr($str, -$needleLen) : true;
+}
