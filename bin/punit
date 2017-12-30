@@ -29,23 +29,45 @@ foreach($classes as $class => $methods) {
             $stack[$class][$method]['result'] = true;
             
             $pass++;
-            
-            echo "$i) $class::$method() --> \033[32m PASS \033[0m" . "\r\n";
+
+            if ($config['punit']['colors']) {
+                echo "$i) $class::$method() --> \033[32m PASS \033[0m" . PHP_EOL;
+            } else {
+                echo "$i) $class::$method() --> PASS" . PHP_EOL;
+            }
         } catch(\Exception $e) {
             $stack[$class][$method]['result'] = false;
             $stack[$class][$method]['stack'] = $e;
             
             $fail++;
             
-            echo "$i) $class::$method() --> \033[31m FAIL, ";
-            echo "Error: ".$e->getMessage()." \033[0m ". "\r\n";
+            if ($config['punit']['colors']) {
+                echo "$i) $class::$method() --> \033[31m FAIL";
+            } else {
+                echo "$i) $class::$method() --> FAIL";
+            }
+            // If verbose, print exception message
+            if ($config['punit']['verbose']) {
+                echo "Error: ".$e->getMessage();
+            }
+            if ($config['punit']['colors']) {
+                echo " \033[0m ";
+            }
+            echo PHP_EOL;
+            if ($config['punit']['stop_on_failure']) {
+                break 2;
+            }
         } 
         
         $i++;         
     }   
 }
 
-echo "\r\n" . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . "\r\n";
+if ($config['punit']['colors']) {
+    echo PHP_EOL . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . PHP_EOL;
+} else {
+    echo PHP_EOL . "Tests: ".($pass+$fail)." Ok: $pass Failures: $fail" . PHP_EOL;
+}
 
 
 //getCodeCoverage($classes, xdebug_get_code_coverage());
