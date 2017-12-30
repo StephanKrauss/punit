@@ -94,8 +94,7 @@ function getCodeCoverage($classes, $codeCoverage)
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Titre de la page</title>    
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <title>Punit - CodeCodeverage</title>
     <style>
         body {
             font-family: "courier new";
@@ -109,7 +108,7 @@ function getCodeCoverage($classes, $codeCoverage)
 </head>
 <body>
     <ul>
-        <!--<li><a href="App/Calc.html">App/Cal.html</a></li>-->
+        <li><a href="App/Calc.html">App/Cal.html</a></li>
         '.$tableOfContents.'
     </ul>
 </body>
@@ -135,6 +134,7 @@ function getCodeCoverage($classes, $codeCoverage)
     <meta charset="utf-8">
     <title>Titre de la page</title>    
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/github.css" />
     <style>
         body {
             font-family: "courier new";
