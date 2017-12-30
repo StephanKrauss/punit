@@ -10,7 +10,7 @@ require $config['punit']['bootstrap'];
 
 $classes = [
     Test\App\CalcTest::class => [],
-    Test\App\AssertTest::class => [],
+    Test\App\OtherTest::class => []
 ];
 
 fillClassMethods($config, $classes);
@@ -20,6 +20,7 @@ $i = 1;
 $pass = 0;
 $fail = 0;
 
+// Start code coverage for executed, not executed and dead code lines
 xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
 
 foreach($classes as $class => $methods) {
@@ -69,9 +70,13 @@ if ($config['punit']['colors']) {
     echo PHP_EOL . "Tests: ".($pass+$fail)." Ok: $pass Failures: $fail" . PHP_EOL;
 }
 
+$codeCoverage= xdebug_get_code_coverage();
 
-//getCodeCoverage($classes, xdebug_get_code_coverage());
-//var_dump(xdebug_get_code_coverage());
+// Generate html coverage report only if all tests pass
+if ($fail <= 0) {
+    getCodeCoverage($codeCoverage);
+}
+
 xdebug_stop_code_coverage();
 
 //------------------------------------------
@@ -90,66 +95,55 @@ function getConfig()
 }
 
 
-/**
- * Generates html report 
- * 
- * @param Array $codeCoverage Gathered information for code coverage
- *
- * @returns boolean
- */
-function getCodeCoverage($classes, $codeCoverage)
+//-----------------------//
+// Generates html report //
+//-----------------------//
+function getCodeCoverage($codeCoverage)
 {
-    // @TODO Filter $codeCoverage array using namespaces keys defined in $classes array
-    // @TODO Create coverage folder 
-    // @TODO Create index.html containing list of class.html path links
-    // @TODO Convert namespace to folder path and create coverage/path/to/class.html
-    // @TODO Generate css class for every line based on flag $codeCoverage element
-    /*
-        li:nth-child(3) {
-            background-color: #F6C6CE;
-        }
-    */
+    // Generate report only for src/ php files
+    $coveredFolder = array_filter($codeCoverage, function($key) {
+        return preg_match('/\/src/', $key);
+    }, ARRAY_FILTER_USE_KEY);    
+
+    $coveredFiles = '';
     
-    //@TODO Generate from filtered $codeCoverage
-    $indexHtml = '
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <title>Punit - CodeCodeverage</title>
-    <style>
-        body {
-            font-family: "courier new";
-        }
+    foreach($coveredFolder as $path => $coverage) {
+        // Set html filename for each php Namespace
+        $coveredPath = str_replace('.php', '.html', str_replace('src', 'coverage', $path));
         
-        li.L0, li.L1, li.L2, li.L3, li.L4
-        li.L5, li.L6, li.L7, li.L8, li.L9 {
-          list-style-type: decimal !important;
-        }
-    </style>
-</head>
-<body>
-    <ul>
-        <li><a href="App/Calc.html">App/Cal.html</a></li>
-        '.$tableOfContents.'
-    </ul>
-</body>
-</html>
-    ';
+        // Add covered filename to index list 
+        $coveredFiles .= '<li><a href="'.$coveredPath.'">'.$coveredPath.'</a></li>';
     
-    //@TODO save to coverage/index.html 
-    
-    //@TODO generate css classes for background for each line    
-    foreach($filteredClasses as $namespace) {
-        $notCoveredCodeCss = 'li:nth-child(3) {
-            background-color: #F6C6CE;
-        }';
+        $coveredCodeCss = '';
+        $notCoveredCodeCss = '';
+        $deadCodeCss = '';
+            
+        // Add different css class for covered line based on flag (1, -1, 2)
+        foreach($coverage as $line => $flag) {       
+            
+            switch($flag) {
+                case 1:
+                    $coveredCodeCss .= "li:nth-child($line),";
+                    break;
+                case -1:
+                    $notCoveredCodeCss .= "li:nth-child($line),";
+                    break;
+                case -2:
+                    $deadCodeCss .= "li:nth-child($line),";
+                    break;
+            }                
+        }   
         
-        $coveredCodeCss = 'li:nth-child(7), li:nth-child(8) {
-            background-color: #E6F5D0;
-        }';
+        $coveredCodeCss = trim($coveredCodeCss, ',');
+        $notCoveredCodeCss = trim($notCoveredCodeCss, ',');
+        $deadCodeCss = trim($deadCodeCss, ',');
         
-        $phpFile = '
+        if ($coveredCodeCss) $coveredCodeCss .= ' {background-color: #E6F5D0;}';
+        if ($notCoveredCodeCss) $notCoveredCodeCss .= ' {background-color: #F6C6CE;}';       
+        if ($deadCodeCss) $deadCodeCss .= ' {background-color: #FCF3CF;}';
+        
+        // coverage/index.html template
+        $file = '
 <!doctype html>
 <html lang="fr">
 <head>
@@ -169,16 +163,54 @@ function getCodeCoverage($classes, $codeCoverage)
         
         '.$coveredCodeCss.'
         '.$notCoveredCodeCss.'
+        '.$deadCodeCss.'
     </style>
 </head>
 <body>
-    <a href="../index.html"><-- Retour</a>
-    <pre class="prettyprint lang-php linenums">&lt;?php
-'.$sourceCode.'</pre>
+    <a href="'.__DIR__.'/../coverage/index.html"><-- Retour</a>
+    <pre class="prettyprint lang-php linenums">'.file_get_contents($path).'</pre>
 </body>
 </html>';
-        //@TODO save to coverage/App/Calc.html
-    }
+        
+        // Create filename path if not exists
+        if (!file_exists(dirname($coveredPath))) {
+            mkdir(dirname($coveredPath),0777,TRUE);
+        }
+        
+        // Save compiled html template
+        file_put_contents(
+            $coveredPath,  
+            str_replace('<?php', '&lt;php', $file)
+        );
+    } 
+    
+    $coverageIndex = '<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Punit - CodeCodeverage</title>
+    <style>
+        body {
+            font-family: "courier new";
+        }
+        
+        li.L0, li.L1, li.L2, li.L3, li.L4
+        li.L5, li.L6, li.L7, li.L8, li.L9 {
+          list-style-type: decimal !important;
+        }
+    </style>
+</head>
+<body>
+    <ul>
+        '.$coveredFiles.'
+    </ul>
+</body>
+</html>';  
+    
+    file_put_contents(
+        __DIR__.'/../coverage/index.html',  
+        $coverageIndex
+    );
     
     echo "\r\n" . "\033[34m Code Coverage completed! \033[0m" . "\r\n";
 }

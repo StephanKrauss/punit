@@ -7,6 +7,11 @@ class Calc {
 	    if (false) {
 	        return false;
 	    }
+	    
+	    if (true) {
+	        $c = $a + $b;
+	    }
+	    
 		return $a + $b;
 	}
 }
