@@ -8,17 +8,19 @@ $config = getConfig();
 
 require $config['punit']['bootstrap'];
 
-$classes = [
-    Test\App\CalcTest::class => [],
-    Test\App\AssertTest::class => [],
-];
+$classes = [];
 
+fillClasses($config, $classes);
 fillClassMethods($config, $classes);
 
 $stack = [];
 $i = 1;
 $pass = 0;
 $fail = 0;
+
+// Start code coverage for executed, not executed and dead code lines
+xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+
 foreach($classes as $class => $methods) {
     foreach($methods as $method) {
         try {
@@ -66,10 +68,18 @@ if ($config['punit']['colors']) {
     echo PHP_EOL . "Tests: ".($pass+$fail)." Ok: $pass Failures: $fail" . PHP_EOL;
 }
 
+$codeCoverage= xdebug_get_code_coverage();
+
+// Generate html coverage report only if all tests pass
+if ($fail <= 0) {
+    getCodeCoverage($codeCoverage);
+}
+
+xdebug_stop_code_coverage();
+
 //------------------------------------------
 // Configuration
 //------------------------------------------
-
 function getConfig()
 {
     $config = [];
@@ -82,6 +92,128 @@ function getConfig()
     return $config;
 }
 
+
+//-----------------------//
+// Generates html report //
+//-----------------------//
+function getCodeCoverage($codeCoverage)
+{
+    // Generate report only for src/ php files
+    $coveredFolder = array_filter($codeCoverage, function($key) {
+        return preg_match('/\/src/', $key);
+    }, ARRAY_FILTER_USE_KEY);    
+
+    $coveredFiles = '';
+    
+    foreach($coveredFolder as $path => $coverage) {
+        // Set html filename for each php Namespace
+        $coveredPath = str_replace('.php', '.html', str_replace('src', 'coverage', $path));
+        
+        // Add covered filename to index list 
+        $coveredFiles .= '<li><a href="'.$coveredPath.'">'.$coveredPath.'</a></li>';
+    
+        $coveredCodeCss = '';
+        $notCoveredCodeCss = '';
+        $deadCodeCss = '';
+            
+        // Add different css class for covered line based on flag (1, -1, 2)
+        foreach($coverage as $line => $flag) {       
+            
+            switch($flag) {
+                case 1:
+                    $coveredCodeCss .= "li:nth-child($line),";
+                    break;
+                case -1:
+                    $notCoveredCodeCss .= "li:nth-child($line),";
+                    break;
+                case -2:
+                    $deadCodeCss .= "li:nth-child($line),";
+                    break;
+            }                
+        }   
+        
+        $coveredCodeCss = trim($coveredCodeCss, ',');
+        $notCoveredCodeCss = trim($notCoveredCodeCss, ',');
+        $deadCodeCss = trim($deadCodeCss, ',');
+        
+        if ($coveredCodeCss) $coveredCodeCss .= ' {background-color: #E6F5D0;}';
+        if ($notCoveredCodeCss) $notCoveredCodeCss .= ' {background-color: #F6C6CE;}';       
+        if ($deadCodeCss) $deadCodeCss .= ' {background-color: #FCF3CF;}';
+        
+        // coverage/index.html template
+        $file = '
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>    
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/github.css" />
+    <style>
+        body {
+            font-family: "courier new";
+        }
+        
+        li.L0, li.L1, li.L2, li.L3, li.L4
+        li.L5, li.L6, li.L7, li.L8, li.L9 {
+          list-style-type: decimal !important;
+        }
+        
+        '.$coveredCodeCss.'
+        '.$notCoveredCodeCss.'
+        '.$deadCodeCss.'
+    </style>
+</head>
+<body>
+    <a href="'.__DIR__.'/../coverage/index.html"><-- Retour</a>
+    <pre class="prettyprint lang-php linenums">'.file_get_contents($path).'</pre>
+</body>
+</html>';
+        
+        // Create filename path if not exists
+        if (!file_exists(dirname($coveredPath))) {
+            mkdir(dirname($coveredPath),0777,TRUE);
+        }
+        
+        // Save compiled html template
+        file_put_contents(
+            $coveredPath,  
+            str_replace('<?php', '&lt;php', $file)
+        );
+    } 
+    
+    $coverageIndex = '<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Punit - CodeCodeverage</title>
+    <style>
+        body {
+            font-family: "courier new";
+        }
+        
+        li.L0, li.L1, li.L2, li.L3, li.L4
+        li.L5, li.L6, li.L7, li.L8, li.L9 {
+          list-style-type: decimal !important;
+        }
+    </style>
+</head>
+<body>
+    <ul>
+        '.$coveredFiles.'
+    </ul>
+</body>
+</html>';  
+    
+    file_put_contents(
+        __DIR__.'/../coverage/index.html',  
+        $coverageIndex
+    );
+    
+    echo "\r\n" . "\033[34m Code Coverage completed! \033[0m" . "\r\n";
+}
+
+
 function fillClassMethods(array $config, array &$classes)
 {
     foreach ($classes as $className => &$methodNames) {
@@ -89,6 +221,32 @@ function fillClassMethods(array $config, array &$classes)
             if (startsWith($methodName, $config['punit']['method']['prefix'].'') &&
                 endsWith($methodName, $config['punit']['method']['suffix'].'')) {
                 $methodNames[] = $methodName;
+            }
+        }
+    }
+}
+
+function fillClasses(array $config, array &$classes)
+{
+    $prefix = $config['punit']['class']['prefix'] . '';
+    $suffix = $config['punit']['class']['suffix'] . '';
+
+    // Iterate over all files in $config['punit']['directories']
+    foreach ($config['punit']['directories'] as $directory) {
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+        foreach ($rii as $file) {
+            $fileName = $file->getFilename();
+            if (!$file->isDir() && startsWith($fileName, $prefix) && endsWith($fileName, $suffix)) {
+                // Get path info
+                $pathinfo = pathinfo($file->getPathname());
+                // Convert path to namespace
+                $fullClassName = 'Test/'.substr($pathinfo['dirname'], strlen($directory)).'/'.$pathinfo['filename'];
+                $fullClassName = strtr($fullClassName, '/', '\\');
+                // Remove duplicate \
+                do {
+                    $fullClassName = str_replace('\\\\', '\\', $fullClassName, $replacements);
+                } while ($replacements);
+                $classes[$fullClassName] = [];
             }
         }
     }

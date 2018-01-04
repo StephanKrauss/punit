@@ -16,7 +16,7 @@ class CalcTest {
 	
 	public function testSumFail() {
 		$operation = new Calc();
-		$expected = 3;
+		$expected = 2;
 		$result = $operation->sum(1, 1);
 		if ($result !== $expected) {
 		    throw new \Exception('Expected: '.$expected.', Result: '.$result);
