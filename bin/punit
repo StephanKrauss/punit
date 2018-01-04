@@ -8,11 +8,9 @@ $config = getConfig();
 
 require $config['punit']['bootstrap'];
 
-$classes = [
-    Test\App\CalcTest::class => [],
-    Test\App\OtherTest::class => []
-];
+$classes = [];
 
+fillClasses($config, $classes);
 fillClassMethods($config, $classes);
 
 $stack = [];
@@ -223,6 +221,32 @@ function fillClassMethods(array $config, array &$classes)
             if (startsWith($methodName, $config['punit']['method']['prefix'].'') &&
                 endsWith($methodName, $config['punit']['method']['suffix'].'')) {
                 $methodNames[] = $methodName;
+            }
+        }
+    }
+}
+
+function fillClasses(array $config, array &$classes)
+{
+    $prefix = $config['punit']['class']['prefix'] . '';
+    $suffix = $config['punit']['class']['suffix'] . '';
+
+    // Iterate over all files in $config['punit']['directories']
+    foreach ($config['punit']['directories'] as $directory) {
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+        foreach ($rii as $file) {
+            $fileName = $file->getFilename();
+            if (!$file->isDir() && startsWith($fileName, $prefix) && endsWith($fileName, $suffix)) {
+                // Get path info
+                $pathinfo = pathinfo($file->getPathname());
+                // Convert path to namespace
+                $fullClassName = 'Test/'.substr($pathinfo['dirname'], strlen($directory)).'/'.$pathinfo['filename'];
+                $fullClassName = strtr($fullClassName, '/', '\\');
+                // Remove duplicate \
+                do {
+                    $fullClassName = str_replace('\\\\', '\\', $fullClassName, $replacements);
+                } while ($replacements);
+                $classes[$fullClassName] = [];
             }
         }
     }
