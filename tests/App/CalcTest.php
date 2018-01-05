@@ -22,4 +22,17 @@ class CalcTest {
 		    throw new \Exception('Expected: '.$expected.', Result: '.$result);
 		}
 	}
+	
+	public function testVarDump() {
+		$operation = new Calc();
+		$expected = 'dridi walid';
+		
+		ob_start();
+		$result = $operation->sum(15, 1);
+		$output = ob_get_clean();
+		
+		if (strpos($output, $expected) === false) {
+		    throw new \Exception('Expected: '.$expected.', STDOUT: '.$output);
+		}
+	}
 }

@@ -8,8 +8,8 @@ class Calc {
 	        return false;
 	    }
 	    
-	    if (true) {
-	        $c = $a + $b;
+	    if ($a === 15) {
+	        var_dump('dridi walid');
 	    }
 	    
 		return $a + $b;
