@@ -4,6 +4,9 @@
 // Make sure the current working directory is the project root directory
 chdir(dirname(dirname(__FILE__)));
 
+// defined assert
+include_once('./bin/assert.php');
+
 $config = getConfig();
 
 require $config['punit']['bootstrap'];
@@ -21,7 +24,9 @@ $fail = 0;
 // Start code coverage for executed, not executed and dead code lines
 xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
 
+// läuft über alle Klassen
 foreach($classes as $class => $methods) {
+    // läuft über alle Methoden einer Klasse
     foreach($methods as $method) {
         try {
             (new $class())->$method();
@@ -34,7 +39,8 @@ foreach($classes as $class => $methods) {
             } else {
                 echo "$i) $class::$method() --> PASS" . PHP_EOL;
             }
-        } catch(\Exception $e) {
+        }
+        catch(\Exception $e) {
             $stack[$class][$method]['result'] = false;
             $stack[$class][$method]['stack'] = $e;
             
@@ -42,29 +48,35 @@ foreach($classes as $class => $methods) {
             
             if ($config['punit']['colors']) {
                 echo "$i) $class::$method() --> \033[31m FAIL";
-            } else {
+            }
+            else {
                 echo "$i) $class::$method() --> FAIL";
             }
+
             // If verbose, print exception message
             if ($config['punit']['verbose']) {
                 echo "Error: ".$e->getMessage();
             }
+
             if ($config['punit']['colors']) {
                 echo " \033[0m ";
             }
+
             echo PHP_EOL;
+
             if ($config['punit']['stop_on_failure']) {
                 break 2;
             }
         } 
         
-        $i++;         
+        $i++;
     }   
 }
 
 if ($config['punit']['colors']) {
     echo PHP_EOL . "\033[34m Tests: ".($pass+$fail)."\033[0m \033[32m Ok: $pass \033[0m \033[31m Failures: $fail \033[0m" . PHP_EOL;
-} else {
+}
+else {
     echo PHP_EOL . "Tests: ".($pass+$fail)." Ok: $pass Failures: $fail" . PHP_EOL;
 }
 
@@ -96,6 +108,7 @@ function getConfig()
 //-----------------------//
 // Generates html report //
 //-----------------------//
+
 function getCodeCoverage($codeCoverage)
 {
     // Generate report only for src/ php files
@@ -251,177 +264,6 @@ function fillClasses(array $config, array &$classes)
         }
     }
 }
-
-//------------------------------------------
-// Assertions
-//------------------------------------------
-
-// Array
-
-function assertArrayHasKey(array &$array, $key)
-{
-    if (!isset($array[$key]) && !array_key_exists($key, $array)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertArrayHasKeys(array &$array, array $keys)
-{
-    foreach ($keys as $key) {
-        assertArrayHasKey($array, $key);
-    }
-}
-
-function assertArrayHasSize(array $array, int $size)
-{
-    if (count($array) !== $size) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-// Directory
-
-function assertDirectoryExists(string $path)
-{
-    if (!is_dir($path)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertDirectoryIsReadable(string $path)
-{
-    if (!is_dir($path) || !is_readable($path)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertDirectoryIsWritable(string $path)
-{
-    if (!is_dir($path) || !is_writable($path)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-// File
-
-function assertFileExists(string $path)
-{
-    if (!is_file($path)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertFileEquals(string $path, string $content)
-{
-    if (!is_file($path) || file_get_contents($path) !== $content) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertFileIsReadable(string $path)
-{
-    if (!is_file($path) || !is_readable($path)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertFileIsWritable(string $path)
-{
-    if (!is_file($path) || !is_writable($path)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-// Comparaison
-
-function assertEmpty($variable)
-{
-    if (!empty($variable)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertEquals($variable, $data)
-{
-    if ($variable !== $data) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertFalse($variable)
-{
-    if (false !== $variable) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertTrue($variable)
-{
-    if (true !== $variable) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertGreaterThan($variable, $data)
-{
-    if ($variable <= $data) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertGreaterThanOrEqual($variable, $data)
-{
-    if ($variable < $data) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-// Object
-
-function assertInstanceOf($variable, $data)
-{
-    if (!($variable instanceof $data)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertNull($variable)
-{
-    if (null !== $variable) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertObjectHasAttribute($object, $attribute)
-{
-    if (!property_exists($object, $attribute)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-// String
-
-function assertRegExp($str, $regex)
-{
-    if (!preg_match($regex, $str)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertStringEndsWith($str, $needle)
-{
-    if (!endsWith($str, $needle)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
-function assertStringStartsWith($str, $needle)
-{
-    if (!startsWith($str, $needle)) {
-        throw new \Exception(__FUNCTION__.' failed.');
-    }
-}
-
 
 /**
  * Checks if a string starts with $needle.
